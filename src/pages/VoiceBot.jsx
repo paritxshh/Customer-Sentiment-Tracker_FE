@@ -22,6 +22,37 @@ const MODELS = [
   { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
 ];
 
+/** Default ElevenLabs client_events (must match backend). Used when customizing conversation flow. */
+const DEFAULT_CLIENT_EVENTS = [
+  "conversation_initiation_metadata",
+  "asr_initiation_metadata",
+  "ping",
+  "audio",
+  "interruption",
+  "user_transcript",
+  "tentative_user_transcript",
+  "agent_response",
+  "agent_response_correction",
+  "agent_response_metadata",
+  "agent_chat_response_part",
+  "client_error",
+];
+
+const CLIENT_EVENT_LABELS = {
+  interruption: "Allow user to interrupt agent",
+  user_transcript: "User transcript",
+  agent_response: "Agent response",
+  audio: "Audio",
+  ping: "Ping",
+  tentative_user_transcript: "Tentative user transcript",
+  agent_response_correction: "Agent response correction",
+  agent_response_metadata: "Agent response metadata",
+  agent_chat_response_part: "Agent chat response (streaming)",
+  client_error: "Client error",
+  conversation_initiation_metadata: "Conversation initiation metadata",
+  asr_initiation_metadata: "ASR initiation metadata",
+};
+
 const inputCls =
   "w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500";
 const selectCls = `${inputCls} appearance-none`;
@@ -148,6 +179,9 @@ function AgentEditor({ agentId }) {
   const [callEndMessage, setCallEndMessage] = useState("");
   const [uninterruptibleReasons, setUninterruptibleReasons] = useState([]);
   const [uninterruptibleInput, setUninterruptibleInput] = useState("");
+  const [clientEvents, setClientEvents] = useState([]);
+  const [showAdvancedEvents, setShowAdvancedEvents] = useState(false);
+  const [ttsSpeed, setTtsSpeed] = useState(1);
 
   const [saveStatus, setSaveStatus] = useState("idle");
   const [syncStatus, setSyncStatus] = useState("idle");
@@ -216,6 +250,8 @@ function AgentEditor({ agentId }) {
       setCallEndMessageType(data.callEndMessageType ?? "dynamic");
       setCallEndMessage(data.callEndMessage ?? "");
       setUninterruptibleReasons(data.uninterruptibleReasons ?? []);
+      setClientEvents(Array.isArray(data.clientEvents) ? data.clientEvents : []);
+      setTtsSpeed(typeof data.ttsSpeed === "number" ? Math.min(1.2, Math.max(0.5, data.ttsSpeed)) : 1);
       if (data.elevenlabsAgentId) {
         setElDashUrl(`https://elevenlabs.io/app/conversational-ai/${data.elevenlabsAgentId}`);
       }
@@ -238,8 +274,34 @@ function AgentEditor({ agentId }) {
     callEndPrompt, callEndMessageType,
     callEndMessage: callEndMessage.trim() || undefined,
     uninterruptibleReasons: uninterruptibleReasons.length > 0 ? uninterruptibleReasons : undefined,
+    clientEvents: clientEvents.length > 0 ? clientEvents : undefined,
+    ttsSpeed,
   }), [name, provider, model, temperature, firstMessage, objective, prompt,
-    elevenlabsVoiceId, callEndPrompt, callEndMessageType, callEndMessage, uninterruptibleReasons]);
+    elevenlabsVoiceId, callEndPrompt, callEndMessageType, callEndMessage, uninterruptibleReasons, clientEvents, ttsSpeed]);
+
+  const interruptionsEnabled = clientEvents.length === 0 || clientEvents.includes("interruption");
+  const setInterruptionsEnabled = (on) => {
+    if (on) {
+      if (clientEvents.length === 0) return; // already default (with interruption)
+      if (clientEvents.includes("interruption")) return;
+      setClientEvents([...clientEvents, "interruption"].sort());
+    } else {
+      const base = clientEvents.length > 0 ? clientEvents : DEFAULT_CLIENT_EVENTS;
+      setClientEvents(base.filter((e) => e !== "interruption"));
+    }
+  };
+  const toggleClientEvent = (event) => {
+    const base = clientEvents.length > 0 ? [...clientEvents] : [...DEFAULT_CLIENT_EVENTS];
+    if (base.includes(event)) {
+      setClientEvents(base.filter((e) => e !== event));
+    } else {
+      setClientEvents([...base, event].sort());
+    }
+  };
+  const isEventChecked = (event) => {
+    const list = clientEvents.length > 0 ? clientEvents : DEFAULT_CLIENT_EVENTS;
+    return list.includes(event);
+  };
 
   const handleSave = async () => {
     setSaveStatus("saving");
@@ -370,6 +432,8 @@ function AgentEditor({ agentId }) {
 
   const SECTIONS = [
     { id: "think", label: "LLM & Prompt", icon: Settings },
+    { id: "conversation-flow", label: "Conversation Flow", icon: Mic },
+    { id: "speech-settings", label: "Speech Settings", icon: Volume2 },
     { id: "call-end", label: "Call End", icon: PhoneOff },
   ];
 
@@ -446,6 +510,87 @@ function AgentEditor({ agentId }) {
               ))}
             </aside>
             <main className="flex-1 overflow-auto p-6 space-y-8">
+              {activeSection === "conversation-flow" && (
+                <>
+                  <section className="space-y-4">
+                    <h2 className="text-sm font-medium text-gray-200">Client events (ElevenLabs)</h2>
+                    <p className="text-xs text-gray-500">
+                      Control which events the ElevenLabs agent sends and whether the user can interrupt the agent while it is speaking. Changes apply after you Save and Sync to ElevenLabs.
+                    </p>
+                    <div className="flex flex-col gap-3 p-4 rounded-lg bg-gray-800 border border-gray-700">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={interruptionsEnabled}
+                          onChange={(e) => setInterruptionsEnabled(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500"
+                        />
+                        <span className="text-sm text-gray-200">
+                          {CLIENT_EVENT_LABELS.interruption}
+                        </span>
+                      </label>
+                      <p className="text-xs text-gray-500 pl-7">
+                        When enabled, users can interrupt the agent mid-sentence. Disable for legal disclaimers or when full delivery is required.
+                      </p>
+                    </div>
+                    <div className="border-t border-gray-800 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedEvents((v) => !v)}
+                        className="text-xs text-gray-500 hover:text-indigo-400 transition-colors"
+                      >
+                        {showAdvancedEvents ? "Hide" : "Show"} other client events
+                      </button>
+                      {showAdvancedEvents && (
+                        <div className="mt-3 flex flex-col gap-2 p-3 rounded-lg bg-gray-800 border border-gray-700 max-h-64 overflow-auto">
+                          {DEFAULT_CLIENT_EVENTS.filter((e) => e !== "interruption").map((event) => (
+                            <label key={event} className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isEventChecked(event)}
+                                onChange={() => toggleClientEvent(event)}
+                                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500"
+                              />
+                              <span className="text-sm text-gray-300">
+                                {CLIENT_EVENT_LABELS[event] ?? event}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </>
+              )}
+              {activeSection === "speech-settings" && (
+                <>
+                  <section className="space-y-4">
+                    <h2 className="text-sm font-medium text-gray-200">Speech speed</h2>
+                    <p className="text-xs text-gray-500">
+                      Control how fast the agent speaks. Changes apply after you Save and Sync to ElevenLabs.
+                    </p>
+                    <div className="p-4 rounded-lg bg-gray-800 border border-gray-700 max-w-md">
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-gray-500 shrink-0 w-8">Slower</span>
+                        <input
+                          type="range"
+                          min={0.5}
+                          max={1.2}
+                          step={0.1}
+                          value={ttsSpeed}
+                          onChange={(e) => setTtsSpeed(Number(e.target.value))}
+                          className="flex-1 h-2 rounded-lg appearance-none bg-gray-700 accent-indigo-500"
+                        />
+                        <span className="text-xs text-gray-500 shrink-0 w-8">Faster</span>
+                      </div>
+                      <p className="mt-2 text-sm text-gray-300">
+                        Speed: <span className="font-mono text-indigo-400">{ttsSpeed.toFixed(1)}×</span>
+                        {ttsSpeed === 1 && <span className="text-gray-500 ml-1">(default)</span>}
+                      </p>
+                    </div>
+                  </section>
+                </>
+              )}
               {activeSection === "think" && (
                 <>
                   <section className="space-y-4">
