@@ -29,6 +29,7 @@ export const triggerMailScan = (limit) => api.post('/mail/scan', {}, { params: {
 export const analyzeSentiment = (text) => api.post('/sentiment/analyze', { text }).then(r => r.data);
 export const fetchUsers = () => api.get('/users').then(r => r.data.data);
 export const updateFeedback = (id, body) => api.patch(`/sentiment/${id}`, body).then(r => r.data.data);
+export const updateCustomer = (id, body) => api.patch(`/customers/${id}`, body).then(r => r.data.data);
 
 export const fetchVoiceAgents = () => api.get('/voice-agents').then(r => r.data);
 export const fetchVoiceAgent = (id) => api.get(`/voice-agents/${id}`).then(r => r.data);
@@ -38,5 +39,8 @@ export const syncVoiceAgent = (id) => api.post(`/voice-agents/${id}/sync-elevenl
 export const unlinkVoiceAgent = (id) => api.post(`/voice-agents/${id}/unlink-elevenlabs`).then(r => r.data);
 export const getVoiceAgentSignedUrl = (id) => api.get(`/voice-agents/${id}/elevenlabs-signed-url`).then(r => r.data);
 export const startVoiceAgentPhoneCall = (id, body) => api.post(`/voice-agents/${id}/start-phone-call`, body).then(r => r.data);
+export const setDefaultVoiceAgent = (id) => api.post(`/voice-agents/${id}/set-default`).then(r => r.data);
+export const getDefaultVoiceAgent = () => api.get('/voice-agents/default').then(r => r.data);
+export const callCustomerWithDefault = (body) => api.post('/voice-agents/call-customer', body).then(r => r.data);
 
 export default api;
