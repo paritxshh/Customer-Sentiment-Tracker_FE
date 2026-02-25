@@ -1,7 +1,8 @@
-import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, MessageSquare, Users, Mail, Activity } from 'lucide-react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, AlertTriangle, MessageSquare, Users, Mail, Activity, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { triggerMailScan } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 
 const NAV = [
@@ -12,8 +13,15 @@ const NAV = [
 ];
 
 export default function Layout() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const handleScan = async () => {
     setScanning(true);
@@ -60,7 +68,7 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-gray-800">
+        <div className="p-3 border-t border-gray-800 space-y-2">
           <button
             onClick={handleScan}
             disabled={scanning}
@@ -74,6 +82,19 @@ export default function Layout() {
             <Mail className="w-4 h-4" />
             {scanning ? 'Scanning...' : 'Scan Emails'}
           </button>
+          {user && (
+            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-800/50">
+              <span className="text-sm text-gray-400 truncate">{user.username}</span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="p-1.5 rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           {scanResult && (
             <p className={clsx('text-xs mt-2 text-center', scanResult.ok ? 'text-emerald-400' : 'text-red-400')}>
               {scanResult.message}
