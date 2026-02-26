@@ -43,6 +43,7 @@ export const setDefaultVoiceAgent = (id) => api.post(`/voice-agents/${id}/set-de
 export const getDefaultVoiceAgent = () => api.get('/voice-agents/default').then(r => r.data);
 export const callCustomerWithDefault = (body) => api.post('/voice-agents/call-customer', body).then(r => r.data);
 export const endVoiceCall = (callSid) => api.post('/voice-agents/end-call', { callSid }).then(r => r.data);
+export const fetchCallStatus = (callSid) => api.get(`/voice-agents/call-status/${callSid}`).then(r => r.data);
 
 // Chats (call log)
 export const fetchChats = (params) => api.get('/chats', { params }).then((r) => r.data);

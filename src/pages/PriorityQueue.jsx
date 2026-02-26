@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { fetchPriorityQueue, fetchUsers, updateFeedback, callCustomerWithDefault, endVoiceCall } from '../lib/api';
+import { fetchPriorityQueue, fetchUsers, updateFeedback, callCustomerWithDefault, endVoiceCall, fetchCallStatus } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import PriorityBadge from '../components/PriorityBadge';
 import SentimentBadge from '../components/SentimentBadge';
@@ -208,6 +208,28 @@ export default function PriorityQueue() {
     }
     setActiveCall(null);
   };
+
+  const TERMINAL_STATUSES = ['completed', 'canceled', 'cancelled', 'busy', 'no-answer', 'failed'];
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    if (!activeCall?.callSid || activeCall.status !== 'ongoing') return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const { status } = await fetchCallStatus(activeCall.callSid);
+        if (TERMINAL_STATUSES.includes(status)) {
+          setActiveCall(null);
+        }
+      } catch {
+        /* network blip — keep polling */
+      }
+    }, 4000);
+
+    return () => clearInterval(pollRef.current);
+  }, [activeCall?.callSid, activeCall?.status]);
 
   const activeFilterCount = [level, category, statusFilter, assigneeFilter].filter(Boolean).length;
 
