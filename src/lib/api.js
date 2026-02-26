@@ -54,6 +54,8 @@ export const generateChatTranscript = (id) =>
   api.post(`/chats/${id}/generate-transcript`).then((r) => r.data);
 export const generateChatSummary = (id) =>
   api.post(`/chats/${id}/generate-summary`).then((r) => r.data);
+export const extractChatEndReason = (id) =>
+  api.post(`/chats/${id}/extract-end-reason`).then((r) => r.data);
 export const patchChat = (id, body) => api.patch(`/chats/${id}`, body).then((r) => r.data);
 
 export default api;

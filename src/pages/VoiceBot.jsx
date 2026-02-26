@@ -726,8 +726,9 @@ function AgentEditor({ agentId }) {
                 <>
                   <section className="space-y-3">
                     <h2 className="text-sm font-medium text-gray-200">End Call Prompt</h2>
-                    <p className="text-xs text-gray-500">When should the agent end the call?</p>
-                    <textarea value={callEndPrompt} onChange={(e) => setCallEndPrompt(e.target.value)} rows={5} className={`${inputCls} resize-y`} />
+                    <p className="text-xs text-gray-500">When should the agent end the call? Leave empty to use the default. The agent will always ask if the ticket can be marked resolved and, if not, will inform about reassignment and 24–48h contact before ending.</p>
+                    <textarea value={callEndPrompt} onChange={(e) => setCallEndPrompt(e.target.value)} rows={5} className={`${inputCls} resize-y`} placeholder="e.g. Use the closing flow when the task is complete, the user asks to end, or when the user is unresponsive." />
+                    <p className="text-xs text-gray-500">Save and then Sync to EL for changes to take effect on live calls.</p>
                   </section>
                   <section className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
