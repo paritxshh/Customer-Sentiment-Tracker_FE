@@ -367,30 +367,32 @@ export default function PriorityQueue() {
         )}
       </div>
 
-      {/* Summary cards */}
+      {/* Summary cards — 5 cards in a single line */}
       {data?.summary && (
-        <div className="grid grid-cols-4 gap-3">
-          {Object.entries(data.summary).map(([lvl, info]) => {
-            const style = SUMMARY_STYLE[lvl] || SUMMARY_STYLE.low;
-            return (
-              <button
-                key={lvl}
-                onClick={() => { setLevel(level === lvl ? '' : lvl); setPage(1); }}
-                className={`relative text-left rounded-xl border p-4 transition-all hover:scale-[1.02] ${
-                  level === lvl
-                    ? `${style.bg} ${style.border} ring-1 ring-${lvl === 'critical' ? 'red' : lvl === 'high' ? 'orange' : lvl === 'medium' ? 'amber' : 'emerald'}-500/20`
-                    : 'bg-gray-900/60 border-gray-800 hover:border-gray-700'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-xs font-semibold uppercase tracking-wider ${style.text}`}>{lvl}</span>
-                  <span className="text-lg">{style.icon}</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-100 tabular-nums">{info.count}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Avg score: {info.avgScore}</p>
-              </button>
-            );
-          })}
+        <div className="overflow-x-auto">
+          <div className="grid gap-3 w-full min-w-0" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+            {Object.entries(data.summary).map(([lvl, info]) => {
+              const style = SUMMARY_STYLE[lvl] || SUMMARY_STYLE.low;
+              return (
+                <button
+                  key={lvl}
+                  onClick={() => { setLevel(level === lvl ? '' : lvl); setPage(1); }}
+                  className={`relative text-left rounded-xl border p-4 transition-all hover:scale-[1.02] min-w-0 ${
+                    level === lvl
+                      ? `${style.bg} ${style.border} ring-1 ring-${lvl === 'critical' ? 'red' : lvl === 'high' ? 'orange' : lvl === 'medium' ? 'amber' : 'emerald'}-500/20`
+                      : 'bg-gray-900/60 border-gray-800 hover:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${style.text}`}>{lvl}</span>
+                    <span className="text-lg">{style.icon}</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-100 tabular-nums">{info.count}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Avg score: {info.avgScore}</p>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
