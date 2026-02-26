@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { fetchCustomers } from '../lib/api';
-import { Users, Search, X } from 'lucide-react';
+import { Users, Search, X, Phone } from 'lucide-react';
 
 export default function Customers() {
   const [data, setData] = useState(null);
@@ -11,7 +10,6 @@ export default function Customers() {
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const debounceRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -77,10 +75,9 @@ export default function Customers() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.results.map((c) => (
-              <button
+              <div
                 key={c._id}
-                onClick={() => navigate(`/customers/${c.customerId || c._id}`)}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-left hover:border-gray-700 transition-colors"
+                className="bg-gray-900 border border-gray-800 rounded-xl p-5"
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">{c.customerId}</span>
@@ -90,11 +87,17 @@ export default function Customers() {
                 </div>
                 <p className="text-sm font-medium text-gray-200">{c.name || c.email}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{c.email}</p>
-                <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                {c.phone && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Phone className="w-3 h-3 text-emerald-400" />
+                    <span className="text-xs text-gray-400">{c.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800 text-xs text-gray-500">
                   <span>{c.feedbackCount} feedback{c.feedbackCount !== 1 ? 's' : ''}</span>
-                  <span>Last: {c.lastSentiment}</span>
+                  <span className="capitalize">Last: {c.lastSentiment}</span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
